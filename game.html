@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Omnigame — Play</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="left-col">
+      <div class="panel" style="min-height:140px">
+        <h3>Prologue</h3>
+        <p>Evacuate 120 civilians within 48 hours. Gunakan RP untuk preview/modify; jaga NB tetap rendah.</p>
+
+        <div style="margin-top:10px;display:flex;align-items:center;gap:8px">
+          <label for="bgmVol" style="font-size:14px;color:#e6f7ff">BGM</label>
+          <input id="bgmVol" type="range" min="0" max="1" step="0.01" value="0.5" style="width:220px">
+          <div id="bgmVolPct" style="width:48px;text-align:right;color:#cfeeff;font-size:13px">50%</div>
+          <button id="bgmMuteBtn" style="margin-left:8px;padding:6px 8px;border-radius:6px;border:none;cursor:pointer">Mute</button>
+        </div>
+
+      </div>
+
+      <div class="panel objectives" id="objectivesPanel">
+        <h3>Objectives</h3>
+        <div>Main Objective: Evacuate <b id="objTarget">120</b> civilians</div>
+        <div>Evacuated: <b id="objProgress">0</b></div>
+        <div>Time left: <b id="objTime">48</b> hrs</div>
+        <div id="subObjectives"></div>
+      </div>
+    </div>
+
+    <div class="right-col">
+      <div class="play-area">
+        <div class="party-row">
+          <div class="slot panel"><div class="portrait"><img id="pKim" src="assets/portrait_kim.png" alt="Kim"/></div><div class="char-name">Kim Dokja</div></div>
+          <div class="slot panel"><div class="portrait"><img id="pMira" src="assets/portrait_mira.png" alt="Mira"/></div><div class="char-name">Captain Mira</div></div>
+          <div class="slot panel"><div class="portrait"><img id="pHaejin" src="assets/portrait_haejin.png" alt="Haejin"/></div><div class="char-name">Haejin</div></div>
+        </div>
+
+        <div class="scenario-panel panel">
+          <div class="scenario-header">
+            <div class="scenario-title">Scenario: Evacuation of Old Harbor</div>
+            <div class="status-line">Supplies: <span id="supplies">120</span> | Morale: <span id="morale">100</span></div>
+          </div>
+          <div class="action-row">
+            <button id="btnRecon" class="action-btn">Recon (Hint)</button>
+            <button id="btnDelay" class="action-btn">Delay (+2h)</button>
+            <button id="btnAdvance" class="action-btn">Advance +1h</button>
+          </div>
+        </div>
+
+        <div id="svgWrap" style="height:420px;margin:12px 0"></div>
+
+        <div class="node-ui panel">
+          <div class="node-title">Quick Node Actions</div>
+          <div class="node-buttons" id="quickButtons"></div>
+        </div>
+
+        <div class="log panel" id="log" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="actionModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <div class="title"></div>
+      <div class="body"></div>
+      <div class="meta"></div>
+      <div class="modal-actions">
+        <button id="modalClose">Close</button>
+        <button id="modalPreview">Preview (RP)</button>
+        <button id="modalResolve">Resolve Node</button>
+        <button id="modalRewrite">Rewrite</button>
+      </div>
+    </div>
+  </div>
+
+  <audio id="bgm" loop crossorigin="anonymous"></audio>
+  <div id="toast" class="toast" style="display:none"></div>
+
+  <script type="module">
+    import Engine from './engine.js';
+    import NodeGraph from './nodegraph.js';
+    import BAL from './balance.js';
+
+    const CONFIG = {
+      BGM: 'assets/bgm_main.mp3',
+      PORTRAITS: { KIM: 'assets/portrait_kim.png', MIRA: 'assets/portrait_mira.png', HAEJIN: 'assets/portrait_haejin.png' }
+    };
+
+    const bgm = document.getElementById('bgm');
+    bgm.src = CONFIG.BGM;
+    bgm.volume = 0.5;
+
+    // BGM volume UI
+    const bgmVol = document.getElementById('bgmVol');
+    const bgmVolPct = document.getElementById('bgmVolPct');
+    const bgmMuteBtn = document.getElementById('bgmMuteBtn');
+    const savedBgm = parseFloat(localStorage.getItem('omnigame_bgm_vol'));
+    if(!isNaN(savedBgm)) { bgmVol.value = savedBgm; bgm.volume = savedBgm; bgmVolPct.textContent = Math.round(savedBgm*100)+'%'; bgmMuteBtn.textContent = savedBgm===0?'Unmute':'Mute'; }
+    else { bgmVolPct.textContent = Math.round(bgm.volume*100)+'%'; }
+    bgmVol.addEventListener('input', (e)=>{ const v=parseFloat(e.target.value); bgm.volume=v; bgmVolPct.textContent=Math.round(v*100)+'%'; localStorage.setItem('omnigame_bgm_vol',String(v)); if(v>0 && bgm.muted) bgm.muted=false; bgmMuteBtn.textContent = v===0?'Unmute':'Mute'; });
+    bgmMuteBtn.addEventListener('click', ()=> {
+      if(bgm.muted || bgm.volume===0){ const last=parseFloat(localStorage.getItem('omnigame_bgm_vol'))||0.5; bgm.muted=false; bgm.volume=last; bgmVol.value=last; bgmVolPct.textContent=Math.round(last*100)+'%'; bgmMuteBtn.textContent='Mute'; localStorage.setItem('omnigame_bgm_vol',String(last)); }
+      else { bgm.muted=true; bgm.volume=0; bgmVol.value=0; bgmVolPct.textContent='0%'; bgmMuteBtn.textContent='Unmute'; localStorage.setItem('omnigame_bgm_vol','0'); }
+    });
+
+    function toast(msg,t=2000){ const el=document.getElementById('toast'); el.textContent=msg; el.style.display='block'; setTimeout(()=>el.style.display='none',t); }
+    function logAdd(txt){ const log=document.getElementById('log'); const d=document.createElement('div'); d.textContent = `[${new Date().toLocaleTimeString()}] ${txt}`; log.prepend(d); }
+
+    const engine = Engine.init({ loadFrom: 'scenarios.json', hooks: { onUpdate:(snap)=>{ document.getElementById('rpVal').textContent = Math.round(snap.rp); document.getElementById('nbVal').textContent = Math.round(snap.nb); document.getElementById('supplies').textContent = Math.max(0, Math.round(snap.world.resources||0)); document.getElementById('morale').textContent = Math.max(0, Math.round(snap.world.morale||0)); document.getElementById('objProgress').textContent = Math.max(0, Math.round(snap.world.evacuated||0)); document.getElementById('objTime').textContent = Math.max(0, 48 - Math.floor(snap.time)); const sub=document.getElementById('subObjectives'); if(sub){ sub.innerHTML=''; (snap.quests||[]).forEach(q=>{ const qdiv=document.createElement('div'); qdiv.innerHTML=`<b>${q.spec.title}</b> - ${q.state}`; sub.appendChild(qdiv); }); } }, onLog:(m)=>logAdd(m), onContract:(c)=>{ if(confirm(c.text)) toast('Contract accepted'); } } });
+
+    setTimeout(()=> {
+      const graph = engine.getGraph();
+      const nodes = {}; const edges = []; let idx=0;
+      Object.values(graph.nodes).forEach((n)=>{ nodes[n.id] = { id:n.id, title:n.title, x:120+(idx%4)*200, y:80+Math.floor(idx/4)*110, type:n.type||'objective' }; (n.edges||[]).forEach(e=>edges.push({ from:n.id, to:e.to||e })); idx++; });
+      const gUI = new NodeGraph({ containerId: 'svgWrap', onNodeClick: (node)=> openModal(node.id) });
+      gUI.loadAndRender({ nodes, edges });
+      const q = document.getElementById('quickButtons'); q.innerHTML=''; Object.values(nodes).forEach(n=>{ const b=document.createElement('button'); b.className='node-btn'; b.textContent=n.title; b.dataset.node=n.id; b.addEventListener('click', ()=> openModal(n.id)); q.appendChild(b); });
+    }, 600);
+
+    const modal = document.getElementById('actionModal');
+    function openModal(nodeId){ const node = engine.getGraph().nodes[nodeId]; modal.style.display='block'; modal.querySelector('.title').textContent = node.title; modal.querySelector('.body').textContent = node.description || 'No description'; modal.querySelector('.meta').textContent = `Time: ${node.timeCost||0}h | Supplies: ${node.suppliesCost||0} | Type: ${node.type}`; modal.dataset.nodeId = nodeId; }
+    document.getElementById('modalClose').addEventListener('click', ()=> modal.style.display='none');
+    document.getElementById('modalPreview').addEventListener('click', ()=>{ const id = modal.dataset.nodeId; const pre = engine.previewNode(id); if(!pre.ok){ toast('Preview unavailable'); return; } const pay = engine.spendRP(BAL.COSTS.PREVIEW, 'Preview'); if(!pay.ok){ toast('Not enough RP'); return; } toast(`Chance: ${pre.chance}%`); logAdd(`Preview ${id}: ${pre.chance}%`); });
+    document.getElementById('modalResolve').addEventListener('click', ()=>{ const id = modal.dataset.nodeId; const res = engine.resolveNode(id, {}); if(res.ok){ toast(res.success ? 'Action succeeded' : 'Action processed'); engine.save(); const snap = engine.snapshot(); if((snap.world.evacuated||0) >= 120){ toast('Victory — evacuation complete'); logAdd('Victory!'); } else if(Math.floor(snap.time) >= 48){ toast('Failure — time expired'); logAdd('Scenario failed: time up'); } } modal.style.display='none'; });
+    document.getElementById('modalRewrite').addEventListener('click', ()=>{ const id = modal.dataset.nodeId; const tDelta = parseInt(prompt('Change timeCost by hours (neg to reduce):','-1'),10) || 0; const dDelta = parseInt(prompt('Change difficulty by (neg to ease):','-5'),10) || 0; if(confirm('Apply rewrite?')){ const out = engine.actionRewrite(id, { timeDelta: tDelta, diffDelta: dDelta, severity: Math.abs(tDelta)+Math.abs(dDelta) > 5 ? 'major':'minor' }); if(!out.ok) toast('Rewrite failed'); else { toast('Rewrite applied'); engine.save(); } } });
+
+    document.getElementById('btnRecon').addEventListener('click', ()=>{ const r=engine.spendRP(BAL.COSTS.HINT,'Hint'); if(!r.ok){ toast('Not enough RP'); return; } const hints=['Ambush likely at checkpoint','Engineer near warehouses','Fuel under crane']; const pick = hints[Math.floor(Math.random()*hints.length)]; logAdd('Hint: '+pick); });
+    document.getElementById('btnDelay').addEventListener('click', ()=>{ const r = engine.spendRP(BAL.COSTS.DELAY, 'Delay'); if(!r.ok){ toast('Not enough RP'); return; } engine.tick(2); toast('Delay applied (+2h)'); engine.save(); });
+    document.getElementById('btnAdvance').addEventListener('click', ()=>{ engine.tick(1); toast('Time +1h'); engine.save(); });
+
+    // attempt to play bgm on gesture
+    document.addEventListener('click', ()=> { bgm.play().catch(()=>{}); }, { once:true });
+  </script>
+</body>
+</html>

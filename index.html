@@ -1,273 +1,78 @@
 <!doctype html>
 <html lang="id">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Omniscient Reader — Prototype</title>
-<link rel="stylesheet" href="styles.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Omnigame — Intro</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-<div class="container">
-  <div class="left-col">
-    <div class="video-frame" id="videoContainer">
-      <video id="introVideo" playsinline webkit-playsinline preload="auto" muted></video>
-      <div class="overlay-start" id="overlay">
-        <button class="start-btn" id="startBtn">Start Game</button>
-        <div class="start-sub">Press to begin — world scenarios will unfold</div>
-      </div>
-    </div>
+  <div class="intro-page fullpage">
+    <video id="introVideo" playsinline webkit-playsinline preload="auto" loop style="width:100%;height:100%;object-fit:cover;">
+      <source src="assets/video_main.mp4" type="video/mp4">
+    </video>
+    <div class="overlay-start">
+      <h1 class="logo">Omnigame Prototype</h1>
 
-    <div class="intro panel" id="introCard">
-      <div class="bg" id="introBg"></div>
-      <h2>Prologue — Evacuation of Old Harbor</h2>
-      <p id="introText">Di pagi yang muram, kabut menyelimuti dermaga tua. Sirene berdering, namun suara-suara itu bukan dari kapal — mereka datang dari langit cerita. Anda adalah pembaca yang sendirian tahu akhir babak ini. Selamat datang, Kim Dokja.</p>
-      <div class="hud">
-        <div class="meter">
-          <img src="" id="iconRP" alt="RP" />
-          <div>RP <span id="rpVal">0</span>/<span id="rpMax">0</span></div>
-        </div>
-        <div class="meter">
-          <img src="" id="iconNB" alt="NB" />
-          <div>NB <span id="nbVal">0</span></div>
-        </div>
-        <div style="flex:1"></div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <label style="font-size:13px;color:#cfeeff">BGM</label>
-          <input id="volume" type="range" min="0" max="1" step="0.01" value="0.5" />
-        </div>
+      <div style="margin:12px 0;display:flex;gap:8px;align-items:center">
+        <label for="introVol" style="font-size:14px;color:#e6f7ff">Intro Volume</label>
+        <input id="introVol" type="range" min="0" max="1" step="0.01" value="0.5" style="width:220px">
+        <div id="introVolPct" style="width:48px;text-align:right;color:#cfeeff;font-size:13px">50%</div>
+        <button id="introMuteBtn" style="margin-left:8px;padding:6px 8px;border-radius:6px;border:none;cursor:pointer">Mute</button>
       </div>
+
+      <button id="startBtn" class="big-btn">Start</button>
+      <div class="hint">Tekan Start untuk melanjutkan ke story</div>
     </div>
   </div>
 
-  <div class="right-col">
-    <div class="play-area">
-      <div class="party-row">
-        <div class="slot panel" id="slotKim">
-          <div class="portrait"><img id="pKim" src="" alt="Kim" /></div>
-          <div class="char-name">Kim Dokja</div>
-          <div class="char-role">Reader Archetype</div>
-          <div class="skill-list" id="skillsKim"></div>
-        </div>
-
-        <div class="slot panel" id="slotMira">
-          <div class="portrait"><img id="pMira" src="" alt="Mira" /></div>
-          <div class="char-name">Captain Mira</div>
-          <div class="char-role">Tank / Leader</div>
-          <div class="skill-list" id="skillsMira"></div>
-        </div>
-
-        <div class="slot panel" id="slotHaejin">
-          <div class="portrait"><img id="pHaejin" src="" alt="Haejin" /></div>
-          <div class="char-name">Haejin</div>
-          <div class="char-role">Engineer</div>
-          <div class="skill-list" id="skillsHaejin"></div>
-        </div>
-      </div>
-
-      <div class="scenario-panel panel">
-        <div class="scenario-header">
-          <div class="scenario-title">Scenario: Evacuation of Old Harbor</div>
-          <div class="time-left">Time left: <span id="timeLeft">48</span> hrs</div>
-        </div>
-
-        <div class="action-row">
-          <button id="btnRecon" class="action-btn">Recon (Hint)</button>
-          <button id="btnPreview" class="action-btn">Preview</button>
-          <button id="btnDelay" class="action-btn">Delay</button>
-        </div>
-
-        <div class="status-line">Supplies: <span id="supplies">120</span> | Civilians left: <span id="civLeft">120</span></div>
-      </div>
-
-      <div id="svgWrap" style="height:420px;margin:12px 0"></div>
-
-      <div class="node-ui panel">
-        <div class="node-title">Node Controls (quick)</div>
-        <div class="node-buttons">
-          <button class="node-btn" data-node="N1">Secure Dock Route</button>
-          <button class="node-btn" data-node="N2">Rescue Engineer</button>
-          <button class="node-btn" data-node="N3">Salvage Fuel</button>
-          <button class="node-btn" data-node="N4">Escort Checkpoints</button>
-          <button class="node-btn" data-node="N5">Handle Ambush</button>
-          <button class="node-btn" data-node="N6">Final Transit</button>
-        </div>
-      </div>
-
-      <div class="log panel" id="log" aria-live="polite"></div>
-    </div>
-  </div>
-</div>
-
-<!-- Action / Node Modal -->
-<div id="actionModal" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9999;background:#071a22;color:#e6f7ff;padding:16px;border-radius:12px;width:520px;box-shadow:0 12px 40px rgba(0,0,0,0.6)">
-  <div class="title" style="font-weight:700;margin-bottom:8px"></div>
-  <div class="body" style="margin-bottom:12px"></div>
-  <div class="meta" style="font-size:13px;color:#cfeeff;margin-bottom:12px"></div>
-  <div style="display:flex;gap:8px;justify-content:flex-end">
-    <button id="modalClose" style="padding:8px 12px">Close</button>
-    <button id="modalPreview" style="padding:8px 12px;background:#2aa6ff;border:none;color:#002233">Preview (cost)</button>
-    <button id="modalResolve" style="padding:8px 12px;background:#7ec8ff;border:none;color:#002233">Resolve Node</button>
-    <button id="modalRewrite" style="padding:8px 12px;background:#ffb86b;border:none;color:#002233">Rewrite</button>
-  </div>
-</div>
-
-<!-- Bond Panel -->
-<div id="bondPanel" style="position:fixed;right:18px;bottom:18px;width:240px;background:#071a22;padding:10px;border-radius:10px;color:#e6f7ff;box-shadow:0 8px 30px rgba(0,0,0,0.6)">
-  <div style="font-weight:700;margin-bottom:8px">Party Bonds</div>
-  <div id="bondList"></div>
-  <div style="margin-top:8px;display:flex;gap:8px;justify-content:space-between">
-    <button id="saveBtn" style="padding:8px 10px">Save</button>
-    <button id="loadBtn" style="padding:8px 10px">Load</button>
-    <button id="tickBtn" style="padding:8px 10px">Tick +1h</button>
-  </div>
-</div>
-
-<!-- Debug / Balance Panel -->
-<div id="debugPanel" style="position:fixed;left:18px;bottom:18px;width:320px;background:rgba(10,18,22,0.95);padding:10px;border-radius:10px;color:#e6f7ff;box-shadow:0 8px 30px rgba(0,0,0,0.6)">
-  <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:700">Debug / Balance</div><button id="dbgToggle">Apply</button></div>
-  <div style="margin-top:8px">
-    <div style="font-size:13px;color:#cfeeff">Alpha (RP→NB)</div>
-    <input id="dbgAlpha" type="range" min="0.3" max="0.9" step="0.01" value="0.6" style="width:100%"/>
-    <div style="font-size:13px;color:#cfeeff">RP Regen base</div>
-    <input id="dbgRegen" type="range" min="0.2" max="3" step="0.1" value="1" style="width:100%"/>
-    <div style="font-size:13px;color:#cfeeff">NB Decay</div>
-    <input id="dbgDecay" type="range" min="0.1" max="1.2" step="0.01" value="0.5" style="width:100%"/>
-  </div>
-</div>
-
-<audio id="bgm" loop crossorigin="anonymous"></audio>
-
-<script type="module">
-import Engine from './src/engine.js';
-import NodeGraph from './src/nodegraph.js';
-import BAL from './config/balance.js';
-
-/* CONFIG: ganti path asset jika perlu */
-const CONFIG = {
-  VIDEO: 'assets/video_main.mp4',
-  INTRO_BG: 'assets/intro_bg.png',
-  BGM: 'assets/bgm_main.mp3',
-  ICON_RP: 'assets/icon_rp.png',
-  ICON_NB: 'assets/icon_nb.png',
-  PORTRAITS: { KIM: 'assets/portrait_kim.png', MIRA: 'assets/portrait_mira.png', HAEJIN: 'assets/portrait_haejin.png' }
-};
-
-/* Init media and basic UI */
-const vid = document.getElementById('introVideo');
-const bgm = document.getElementById('bgm');
-vid.src = CONFIG.VIDEO; vid.loop = true; vid.muted = true; vid.play().catch(()=>{});
-document.getElementById('introBg').style.backgroundImage = `url('${CONFIG.INTRO_BG}')`;
-document.getElementById('iconRP').src = CONFIG.ICON_RP;
-document.getElementById('iconNB').src = CONFIG.ICON_NB;
-document.getElementById('pKim').src = CONFIG.PORTRAITS.KIM;
-document.getElementById('pMira').src = CONFIG.PORTRAITS.MIRA;
-document.getElementById('pHaejin').src = CONFIG.PORTRAITS.HAEJIN;
-bgm.src = CONFIG.BGM; bgm.volume = 0.5;
-document.getElementById('volume').addEventListener('input', ()=>{ bgm.volume = parseFloat(document.getElementById('volume').value); });
-
-/* Engine init */
-const engine = Engine.init({
-  loadFrom: 'data/scenarios.json',
-  balance: { ALPHA: BAL.ALPHA, RP_REGEN_BASE: BAL.RP_REGEN_BASE, NB_DECAY_BASE: BAL.NB_DECAY_BASE },
-  hooks: {
-    onUpdate: (snap) => {
-      document.getElementById('rpVal').textContent = Math.round(snap.rp);
-      document.getElementById('rpMax').textContent = snap.rpMax || 60;
-      document.getElementById('nbVal').textContent = Math.round(snap.nb);
-      document.getElementById('timeLeft').textContent = Math.max(0, 48 - Math.floor(snap.time));
-      const bl = document.getElementById('bondList'); bl.innerHTML = '';
-      snap.roster.forEach(r => {
-        const div = document.createElement('div'); div.style.marginBottom='6px';
-        div.innerHTML = `<div style="font-weight:700">${r.name}</div><div style="font-size:12px;color:#cfeeff">Bond: ${r.bond}${r.alive? '': ' (lost)'}</div>`;
-        bl.appendChild(div);
-      });
-    },
-    onLog: (m) => { const lg = document.getElementById('log'); if(lg){ const d=document.createElement('div'); d.textContent = `[${new Date().toLocaleTimeString()}] ${m}`; lg.prepend(d); } },
-    onContract: (c) => { if(confirm(c.text + "\nAccept? (favor "+c.favor+", cost artifacts "+c.costArtifacts+")")) { alert('Contract accepted (effect placeholder)'); } }
+<script>
+  const introVideo = document.getElementById('introVideo');
+  const introVol = document.getElementById('introVol');
+  const introVolPct = document.getElementById('introVolPct');
+  const introMuteBtn = document.getElementById('introMuteBtn');
+  const savedIntroVol = parseFloat(localStorage.getItem('omnigame_intro_vol'));
+  if(!isNaN(savedIntroVol)) {
+    introVol.value = savedIntroVol;
+    introVideo.volume = savedIntroVol;
+    introVolPct.textContent = Math.round(savedIntroVol*100) + '%';
+    introMuteBtn.textContent = savedIntroVol === 0 ? 'Unmute' : 'Mute';
+  } else {
+    introVideo.volume = parseFloat(introVol.value);
+    introVolPct.textContent = Math.round(introVideo.volume*100) + '%';
   }
-});
-
-/* Node graph render */
-setTimeout(()=> {
-  const graph = engine.getGraph();
-  const nodes = {}; const edges = [];
-  Object.values(graph.nodes).forEach((n, idx) => {
-    nodes[n.id] = { id: n.id, title: n.title, x: 120 + (idx%4)*200, y: 80 + Math.floor(idx/4)*110, type: n.type || 'objective' };
-    (n.edges||[]).forEach(e => edges.push({ from: n.id, to: e.to || e }));
+  introVol.addEventListener('input', (e) => {
+    const v = parseFloat(e.target.value);
+    introVideo.volume = v;
+    introVolPct.textContent = Math.round(v*100) + '%';
+    localStorage.setItem('omnigame_intro_vol', String(v));
+    introMuteBtn.textContent = v === 0 ? 'Unmute' : 'Mute';
+    if(v > 0 && introVideo.muted) introVideo.muted = false;
   });
-  const gUI = new NodeGraph({ containerId: 'svgWrap', onNodeClick: (node)=>{
-    const m = document.getElementById('actionModal');
-    m.querySelector('.title').textContent = node.title;
-    const nodeObj = engine.getGraph().nodes[node.id] || {};
-    m.querySelector('.body').textContent = nodeObj.description || 'No description';
-    m.querySelector('.meta').textContent = `Time: ${nodeObj.timeCost||0}h | Supplies: ${nodeObj.suppliesCost||0}`;
-    m.style.display = 'block';
-    m.dataset.nodeId = node.id;
-  }});
-  gUI.loadAndRender({ nodes, edges });
-}, 700);
+  introMuteBtn.addEventListener('click', () => {
+    if(introVideo.muted || introVideo.volume === 0) {
+      const last = parseFloat(localStorage.getItem('omnigame_intro_vol')) || 0.5;
+      introVideo.muted = false;
+      introVideo.volume = last;
+      introVol.value = last;
+      introVolPct.textContent = Math.round(last*100) + '%';
+      introMuteBtn.textContent = 'Mute';
+      localStorage.setItem('omnigame_intro_vol', String(last));
+    } else {
+      introVideo.muted = true;
+      introVideo.volume = 0;
+      introVol.value = 0;
+      introVolPct.textContent = '0%';
+      introMuteBtn.textContent = 'Unmute';
+      localStorage.setItem('omnigame_intro_vol', '0');
+    }
+  });
 
-/* Modal controls */
-document.getElementById('modalClose').addEventListener('click', ()=> document.getElementById('actionModal').style.display='none');
-document.getElementById('modalResolve').addEventListener('click', ()=> {
-  const id = document.getElementById('actionModal').dataset.nodeId;
-  engine.resolveNode(id, {});
-  document.getElementById('actionModal').style.display='none';
-});
-document.getElementById('modalPreview').addEventListener('click', ()=> {
-  const id = document.getElementById('actionModal').dataset.nodeId;
-  const pre = engine.previewNode(id);
-  if(pre.ok){
-    const costRes = engine.spendRP(BAL.COSTS.PREVIEW, "Preview");
-    if(costRes.ok) alert(`Preview chance: ${pre.chance}% (RP-${costRes.spent}, NB+${costRes.nbGain})`);
-    else alert("Not enough RP to Preview");
-  } else alert("Preview unavailable");
-});
-document.getElementById('modalRewrite').addEventListener('click', ()=> {
-  const id = document.getElementById('actionModal').dataset.nodeId;
-  const timeDelta = parseInt(prompt("Change timeCost by (hours, negative to reduce):", "-1"), 10) || 0;
-  const diffDelta = parseInt(prompt("Change difficulty (negative to ease):", "-5"), 10) || 0;
-  if(confirm("Apply rewrite? This costs RP and increases NB.")){
-    engine.actionRewrite(id, { timeDelta, diffDelta, severity: Math.abs(timeDelta)+Math.abs(diffDelta) > 5 ? 'major' : 'minor' });
-    document.getElementById('actionModal').style.display='none';
-  }
-});
-
-/* Quick node buttons */
-document.querySelectorAll('.node-btn').forEach(b=>{
-  b.addEventListener('click', ()=> { engine.resolveNode(b.dataset.node, {}); });
-});
-
-/* Reader Actions quick */
-document.getElementById('btnRecon').addEventListener('click', ()=> { const r = engine.spendRP(BAL.COSTS.HINT, "Hint"); if(r.ok) alert("Hint used (log shows details)"); else alert("Not enough RP"); });
-document.getElementById('btnPreview').addEventListener('click', ()=> { alert("Use node preview modal (click a node)"); });
-document.getElementById('btnDelay').addEventListener('click', ()=> { const r=engine.spendRP(BAL.COSTS.DELAY, "Delay"); if(r.ok) engine.tick(2); else alert("Not enough RP"); });
-
-/* Bond/Save/Tick buttons */
-document.getElementById('saveBtn').addEventListener('click', ()=> { engine.save(); alert('Saved'); });
-document.getElementById('loadBtn').addEventListener('click', ()=> { engine.load(); alert('Loaded'); });
-document.getElementById('tickBtn').addEventListener('click', ()=> { engine.tick(1); });
-
-/* Debug panel apply */
-document.getElementById('dbgToggle').addEventListener('click', ()=> {
-  const a = parseFloat(document.getElementById('dbgAlpha').value);
-  const r = parseFloat(document.getElementById('dbgRegen').value);
-  const d = parseFloat(document.getElementById('dbgDecay').value);
-  engine.init({ balance: { ALPHA: a, RP_REGEN_BASE: r, NB_DECAY_BASE: d }});
-  alert('Balance updated');
-});
-
-/* Start/Autoplay handlers */
-document.getElementById('startBtn').addEventListener('click', ()=> {
-  document.getElementById('overlay').style.display = 'none';
-  bgm.play().catch(()=>{});
-  vid.muted = false; vid.play().catch(()=>{});
-});
-
-/* Initial HUD fill */
-document.getElementById('skillsKim').innerHTML = `<div class="skill">Narrative Recall - reveals node (cost 12 RP)</div><div class="skill">Burden Buffer</div>`;
-document.getElementById('skillsMira').innerHTML = `<div class="skill">Reinforced Stance</div>`;
-document.getElementById('skillsHaejin').innerHTML = `<div class="skill">Quick Patch</div>`;
+  document.getElementById('startBtn').addEventListener('click', () => {
+    introVideo.play().catch(()=>{});
+    window.location.href = 'lore.html';
+  });
+  introVideo.play().catch(()=>{});
 </script>
 </body>
 </html>

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Omnigame — Lore</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="lore-page centered">
+    <div class="lore-panel panel">
+      <h2>Prologue — Evacuation of Old Harbor</h2>
+      <div id="loreSteps">
+        <div class="lore-step" data-step="1">
+          <p>Pagi berkabut di dermaga tua. Sirene meraung, dan kabar ketakutan menyebar di antara rakit-rakit tua. Anda mempunyai pengetahuan yang tak dimiliki orang lain.</p>
+        </div>
+        <div class="lore-step" data-step="2" style="display:none">
+          <p>Kota terdesak. Dermaga menjadi jalur terakhir untuk menyelamatkan warga — namun jalur itu penuh risiko: ambush, kelangkaan bahan, dan kecurigaan dari pihak lain.</p>
+        </div>
+        <div class="lore-step" data-step="3" style="display:none">
+          <p>Anda adalah pembaca — kekuatan untuk memodifikasi alur ada pada Anda. Gunakan RP dengan bijak, atur tim, dan lindungi harapan warga.</p>
+        </div>
+      </div>
+
+      <div class="lore-controls">
+        <button id="backIntro" class="small-btn">Back</button>
+        <div style="flex:1"></div>
+        <button id="nextLore" class="small-btn">Next</button>
+        <button id="playGame" class="big-btn" style="display:none">Play the game</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const back = document.getElementById('backIntro');
+  const next = document.getElementById('nextLore');
+  const play = document.getElementById('playGame');
+  const steps = Array.from(document.querySelectorAll('.lore-step'));
+  let idx = 0;
+  function showStep(i){
+    steps.forEach((el, j)=> el.style.display = (j===i)?'block':'none');
+    next.style.display = (i < steps.length-1) ? 'inline-block' : 'none';
+    play.style.display = (i === steps.length-1) ? 'inline-block' : 'none';
+  }
+  showStep(idx);
+  next.addEventListener('click', ()=>{ idx = Math.min(steps.length-1, idx+1); showStep(idx); });
+  back.addEventListener('click', ()=> { window.location.href='index.html'; });
+  play.addEventListener('click', ()=> { window.location.href='game.html'; });
+</script>
+</body>
+</html>
