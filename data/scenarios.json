@@ -1,0 +1,74 @@
+{
+  "scenarios": {
+    "evac_old_harbor": {
+      "id": "evac_old_harbor",
+      "title": "Evacuation of Old Harbor",
+      "tier": 3,
+      "description": "Evacuate the civilians from Old Harbor within time limit. Multiple objectives.",
+      "startNodes": ["N0"],
+      "nodes": ["N0","N1","N2","N3","N4","N5","N6","N7","N8"],
+      "rules": {
+        "enemyEscalateInterval": 12,
+        "commBlackoutWindows": [{"afterHours":12,"duration":0.5}],
+        "weatherFinal": {"startAt":36,"movePenaltyPct":30}
+      }
+    }
+  },
+  "nodes": {
+    "N0": {
+      "id":"N0","title":"Briefing","type":"decision","timeCost":1,
+      "description":"Allocate tasks: Secure docks, Rescue Engineer, or Salvage Fuel.",
+      "edges":[{"to":"N1"},{"to":"N2"},{"to":"N3"}]
+    },
+    "N1": {
+      "id":"N1","title":"Secure Dock Route","type":"objective","timeCost":4,"suppliesCost":10,
+      "description":"Clear the dock route. Choose stealth or force.",
+      "checks":[{"stat":"stealth","difficulty":40}],
+      "edges":[{"to":"N4","label":"route clear"},{"to":"N5","label":"ambush risk"}],
+      "rewards":{"rp":8}
+    },
+    "N2": {
+      "id":"N2","title":"Rescue Harbor Engineer","type":"objective","timeCost":6,
+      "description":"Rescue Haejin before deadline to enable repairs.",
+      "checks":[{"stat":"resolve","difficulty":50}],
+      "edges":[{"to":"N4"},{"to":"N6"}],
+      "rewards":{"rp":8}
+    },
+    "N3": {
+      "id":"N3","title":"Salvage Fuel Container","type":"objective","timeCost":3,"suppliesCost":5,
+      "description":"Salvage fuel; success grants motorboat option.",
+      "checks":[{"stat":"technical","difficulty":45}],
+      "edges":[{"to":"N5"},{"to":"N6"}],
+      "rewards":{"supplies":18,"artifacts":2}
+    },
+    "N4": {
+      "id":"N4","title":"Escort Checkpoints","type":"objective","timeCost":8,
+      "description":"Escort civilians across 3 checkpoints.",
+      "checks":[{"stat":"leadership","difficulty":50}],
+      "edges":[{"to":"N5"},{"to":"N6"}],
+      "rewards":{"rp":6}
+    },
+    "N5": {
+      "id":"N5","title":"Ambush Branch","type":"decision","timeCost":5,"suppliesCost":20,
+      "description":"Decide to Hold & Fortify or Breakthrough.",
+      "checks":[{"stat":"combat","difficulty":55}],
+      "edges":[{"to":"N6"},{"to":"N7"}]
+    },
+    "N6": {
+      "id":"N6","title":"Final Transit","type":"objective","timeCost":6,
+      "description":"Transit to the secure zone; weather may slow you.",
+      "checks":[{"stat":"navigation","difficulty":45}],
+      "edges":[{"to":"N8"},{"to":"N7"}]
+    },
+    "N7": {
+      "id":"N7","title":"Failure","type":"event","timeCost":0,
+      "description":"Scenario failed; heavy consequences.",
+      "failure":{"civiliansLoss":30,"killChance":0.12}
+    },
+    "N8": {
+      "id":"N8","title":"Success","type":"event","timeCost":0,
+      "description":"Successful evacuation; narrative rewards granted.",
+      "rewards":{"rp":30,"artifacts":10}
+    }
+  }
+}
